@@ -20,6 +20,8 @@ pub enum TranscriptionModelId {
     ParakeetUnifiedEnglish,
     ParakeetV2,
     ParakeetV3,
+    #[serde(rename = "parakeet_v3_uk")]
+    ParakeetV3Ukrainian,
     WhisperLargeV3Turbo,
     Qwen3Asr06B,
     SenseVoiceSmall,
@@ -33,6 +35,7 @@ impl TranscriptionModelId {
             Self::ParakeetUnifiedEnglish => "parakeet_unified_en",
             Self::ParakeetV2 => "parakeet_v2",
             Self::ParakeetV3 => "parakeet_v3",
+            Self::ParakeetV3Ukrainian => "parakeet_v3_uk",
             Self::WhisperLargeV3Turbo => "whisper_large_v3_turbo",
             Self::Qwen3Asr06B => "qwen3_asr06_b",
             Self::SenseVoiceSmall => "sense_voice_small",
@@ -50,6 +53,7 @@ impl FromStr for TranscriptionModelId {
             "parakeet_unified_en" => Ok(Self::ParakeetUnifiedEnglish),
             "parakeet_v2" => Ok(Self::ParakeetV2),
             "parakeet_v3" => Ok(Self::ParakeetV3),
+            "parakeet_v3_uk" => Ok(Self::ParakeetV3Ukrainian),
             "whisper_large_v3_turbo" => Ok(Self::WhisperLargeV3Turbo),
             "qwen3_asr06_b" => Ok(Self::Qwen3Asr06B),
             "sense_voice_small" => Ok(Self::SenseVoiceSmall),
@@ -269,6 +273,15 @@ const PARAKEET_V3_ARTIFACT: GgufArtifact = GgufArtifact {
     architecture: "parakeet",
     variant: "tdt-0.6b-v3",
 };
+const PARAKEET_V3_UKRAINIAN_ARTIFACT: GgufArtifact = GgufArtifact {
+    filename: "parakeet-tdt-0.6b-v3-uk-Q8_0.gguf",
+    revision: "74cc0314b46382db94909fd70cf05f4b68c3a088",
+    repository: "zhebil/parakeet-tdt-0.6b-v3-uk-gguf",
+    bytes: 739_508_640,
+    sha256: "256fd99165057a7bfa49d2d3b8c15c19fe9a903608a1c4e3ea3493af85ad9f48",
+    architecture: "parakeet",
+    variant: "tdt-0.6b-v3",
+};
 const WHISPER_ARTIFACT: GgufArtifact = GgufArtifact {
     filename: "whisper-large-v3-turbo-Q8_0.gguf",
     revision: "d222c9f621c1128299248f2ded4d8a1820519780",
@@ -349,6 +362,21 @@ pub const MODELS: &[ModelDefinition] = &[
         runtime: ModelRuntime::Gguf(&PARAKEET_V3_ARTIFACT),
         languages: PARAKEET_V3_LANGUAGES,
         // The pinned v3 artifact detects language from audio and has no prompt input.
+        accepts_language_hint: false,
+        supports_language_detection: false,
+        supports_recognition_hints: false,
+    },
+    ModelDefinition {
+        id: TranscriptionModelId::ParakeetV3Ukrainian,
+        name: "Parakeet v3 Ukrainian",
+        realtime: "~33x",
+        quality: "6.01%",
+        quality_context: "Ukrainian benchmark",
+        coverage: "Ukrainian",
+        timestamps: "Token timestamps",
+        streams: false,
+        runtime: ModelRuntime::Gguf(&PARAKEET_V3_UKRAINIAN_ARTIFACT),
+        languages: &["uk"],
         accepts_language_hint: false,
         supports_language_detection: false,
         supports_recognition_hints: false,
@@ -531,6 +559,20 @@ pub(crate) fn choices_for_runtime(language: &str) -> Vec<ModelChoice> {
             choice(
                 TranscriptionModelId::SenseVoiceSmall,
                 Recommendation::Fastest,
+            ),
+            choice(
+                TranscriptionModelId::WhisperLargeV3Turbo,
+                Recommendation::RecognitionHints,
+            ),
+        ],
+        "uk" => vec![
+            choice(
+                TranscriptionModelId::ParakeetV3,
+                Recommendation::Recommended,
+            ),
+            choice(
+                TranscriptionModelId::ParakeetV3Ukrainian,
+                Recommendation::MostAccurate,
             ),
             choice(
                 TranscriptionModelId::WhisperLargeV3Turbo,
@@ -1119,6 +1161,13 @@ mod tests {
         let mandarin = choices_for_runtime("zh");
         assert_eq!(mandarin[0].model.id, TranscriptionModelId::Qwen3Asr06B);
         assert_eq!(mandarin[1].model.id, TranscriptionModelId::SenseVoiceSmall);
+        let ukrainian = choices_for_runtime("uk");
+        assert_eq!(ukrainian[0].model.id, TranscriptionModelId::ParakeetV3);
+        assert_eq!(
+            ukrainian[1].model.id,
+            TranscriptionModelId::ParakeetV3Ukrainian
+        );
+        assert_eq!(ukrainian[1].recommendation, Recommendation::MostAccurate);
     }
 
     #[test]
@@ -1147,6 +1196,7 @@ mod tests {
             ),
             (TranscriptionModelId::ParakeetV2, "parakeet_v2"),
             (TranscriptionModelId::ParakeetV3, "parakeet_v3"),
+            (TranscriptionModelId::ParakeetV3Ukrainian, "parakeet_v3_uk"),
             (
                 TranscriptionModelId::WhisperLargeV3Turbo,
                 "whisper_large_v3_turbo",

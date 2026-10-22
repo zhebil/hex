@@ -200,6 +200,17 @@ metadata inspection establish the prompting limitation, not the cause or repair
 of those transcripts. No v3 audio reproduction or transcription-quality fix has
 been demonstrated.
 
+Ukrainian also offers Parakeet v3 Ukrainian, tagged Most accurate; Parakeet v3
+stays Recommended, so `recommended_selection("uk")` and saved selections are
+unchanged. The pinned GGUF is a Q8_0 `transcribe.cpp` conversion of
+[`ihnatov-yuri/parakeet-tdt-0.6b-v3-uk`](https://huggingface.co/ihnatov-yuri/parakeet-tdt-0.6b-v3-uk)
+(CC-BY-4.0), a weights-only fine-tune with the v3 architecture and tokenizer,
+so like v3 it takes no language hint. Its 6.01% WER was measured once on that
+GGUF against FLEURS Ukrainian test (Parakeet v3 6.84%, Whisper large-v3-turbo
+7.30%); no repository check runs inference. The picker cards show that
+Ukrainian score next to the other models' English scores.
+`recommendations_are_language_specific` checks the catalog order.
+
 Checks start in [onboarding.rs](../../src/onboarding.rs),
 [transcription.rs](../../src/transcription.rs), and
 [transcription_models.rs](../../src/transcription_models.rs). Setup/picker previews
